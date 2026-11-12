@@ -1,0 +1,385 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "SmartGN - Message Broker",
+    "description": "Internal adapter for EMQX credentials, topic authorization and service-event publishing.",
+    "license": {
+      "name": "MIT"
+    },
+    "version": "v1"
+  },
+  "servers": [
+    {
+      "url": "http://message-broker:8087",
+      "description": "Generated server url"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Device access",
+      "description": "Manage device credentials and telemetry topic permissions in EMQX."
+    },
+    {
+      "name": "Service events",
+      "description": "Publish service events and inspect recent acknowledgments."
+    }
+  ],
+  "paths": {
+    "/api/v1/broker/messages/publish": {
+      "post": {
+        "tags": [
+          "Service events"
+        ],
+        "summary": "Publish a service event",
+        "description": "Sends a service event to an allowed MQTT topic with the requested QoS.",
+        "operationId": "publishMessage",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PublishMqttMessageRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/MqttMessageEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Service token is missing or invalid."
+          }
+        },
+        "security": [
+          {
+            "serviceAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/broker/devices/{deviceId}/revoke": {
+      "post": {
+        "tags": [
+          "Device access"
+        ],
+        "summary": "Revoke device access",
+        "description": "Removes the device credentials and revokes its MQTT access.",
+        "operationId": "revokeDevice",
+        "parameters": [
+          {
+            "name": "deviceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceBrokerCredential"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Service token is missing or invalid."
+          }
+        },
+        "security": [
+          {
+            "serviceAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/broker/devices/authorize": {
+      "post": {
+        "tags": [
+          "Device access"
+        ],
+        "summary": "Authorize a device",
+        "description": "Creates device credentials and grants MQTT publish access to its telemetry topic.",
+        "operationId": "authorizeDevice",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AuthorizeDeviceRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceBrokerCredential"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Service token is missing or invalid."
+          }
+        },
+        "security": [
+          {
+            "serviceAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/broker/messages": {
+      "get": {
+        "tags": [
+          "Service events"
+        ],
+        "summary": "List recent published events",
+        "description": "Lists events acknowledged by the adapter during its current process lifetime.",
+        "operationId": "getRecentMessages",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MqttMessageEnvelope"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Service token is missing or invalid."
+          }
+        },
+        "security": [
+          {
+            "serviceAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/broker/devices": {
+      "get": {
+        "tags": [
+          "Device access"
+        ],
+        "summary": "List authorized devices",
+        "description": "Lists device credentials tracked by EMQX without returning their secrets.",
+        "operationId": "listAuthorizedDevices",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DeviceBrokerCredential"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Service token is missing or invalid."
+          }
+        },
+        "security": [
+          {
+            "serviceAuth": []
+          }
+        ]
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "PublishMqttMessageRequest": {
+        "type": "object",
+        "properties": {
+          "topic": {
+            "type": "string"
+          },
+          "eventId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "qos": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "payload": {
+            "type": "object",
+            "additionalProperties": {}
+          }
+        }
+      },
+      "MqttMessageEnvelope": {
+        "type": "object",
+        "properties": {
+          "messageId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "eventId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "protocolVersion": {
+            "type": "string"
+          },
+          "topic": {
+            "type": "string"
+          },
+          "qos": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "tlsEncrypted": {
+            "type": "boolean"
+          },
+          "payload": {
+            "type": "object",
+            "additionalProperties": {}
+          },
+          "publishedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "DeviceBrokerCredential": {
+        "type": "object",
+        "properties": {
+          "credentialId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "deviceId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "hardwareSerial": {
+            "type": "string"
+          },
+          "allowedTopic": {
+            "type": "string"
+          },
+          "mqttUsername": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "associationVersion": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "oneTimeCredential": {
+            "type": "string"
+          }
+        }
+      },
+      "AuthorizeDeviceRequest": {
+        "type": "object",
+        "properties": {
+          "deviceId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "hardwareSerial": {
+            "type": "string"
+          },
+          "supplyPointId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "associationVersion": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "serviceAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "opaque service token"
+      }
+    }
+  }
+}

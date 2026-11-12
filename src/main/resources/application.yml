@@ -1,30 +1,49 @@
 server:
-  port: 8086
+  port: 8087
 
 spring:
   application:
     name: smartgn-message-broker
+  config:
+    import: ${SPRING_CONFIG_IMPORT:optional:configserver:http://localhost:8088}
   boot:
     admin:
       client:
-        url: http://localhost:8085
+        url: ${SMARTGN_ADMIN_URL:http://localhost:8089}
+        username: ${SMARTGN_ADMIN_USERNAME:admin}
+        password: ${SMARTGN_ADMIN_PASSWORD:local-admin-password}
+        instance:
+          service-url: ${SMARTGN_ADMIN_SERVICE_URL:http://localhost:8087}
+          management-url: ${SMARTGN_ADMIN_MANAGEMENT_URL:http://localhost:8087/actuator}
+          health-url: ${SMARTGN_ADMIN_HEALTH_URL:http://localhost:8087/actuator/health}
 
 mqtt:
   broker:
-    protocol: MQTT 5.0 over TLS 1.3
-    host: localhost
-    port: 1883
-    tls-port: 8883
-    default-qos: 1
+    protocol: MQTT 5.0
+    host: ${MQTT_BROKER_HOST:localhost}
+    port: ${MQTT_BROKER_PORT:1883}
+    username: ${MQTT_USERNAME:broker-service}
+    password: ${MQTT_BROKER_PASSWORD:}
+    client-id: ${MQTT_CLIENT_ID:smartgn-message-broker}
+    topic-prefix: ${MQTT_TOPIC_PREFIX:smartgn/events/broker/}
+    timeout-seconds: ${MQTT_TIMEOUT_SECONDS:5}
+
+emqx:
+  api-url: ${EMQX_API_URL:http://localhost:18083/api/v5}
+  api-key: ${EMQX_API_KEY:}
+  api-secret: ${EMQX_API_SECRET:}
+
+smartgn:
+  internal-token: ${INTERNAL_SERVICE_TOKEN:}
 
 management:
   endpoints:
     web:
       exposure:
-        include: "*"
+        include: health,info
   endpoint:
     health:
-      show-details: always
+      show-details: never
 
 springdoc:
   swagger-ui:
