@@ -1,0 +1,15 @@
+{
+  "service": "smartgn-message-broker",
+  "version": 1,
+  "records": [
+    {
+      "alias": "demo-broker-event",
+      "topic": "smartgn/events/broker/demo",
+      "qos": 1,
+      "payload": {
+        "source": "local-fixture",
+        "kind": "BrokerSmoke"
+      }
+    }
+  ]
+}
