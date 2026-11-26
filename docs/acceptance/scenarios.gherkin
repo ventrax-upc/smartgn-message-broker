@@ -1,0 +1,12 @@
+# Source: Ventrax AV4 report. Acceptance specification; execution is verified separately.
+Feature: MQTT access and SmartGN dashboard
+
+  Scenario: Authorize a device to publish telemetry
+    Given a device has a valid identifier and association version
+    When an internal service requests MQTT authorization
+    Then the broker creates its credentials and allowed telemetry topic
+
+  Scenario: Display the authenticated dashboard
+    Given a user has signed in with a valid session
+    When the user opens the SmartGN dashboard
+    Then the application displays the summary allowed for the user role
